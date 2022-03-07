@@ -23,8 +23,16 @@ public class CollectionController : ControllerBase
         }
     }
 
+    // The Dapr ASP.NET Core integration library offers an elegant way of linking an 
+    //      ASP.NET Core WebAPI method to a pub/sub topic. 
+    // For every message sent to that topic, the WebAPI method is invoked and
+    //      the payload of the message is delivered as request body. 
+    // You don't have to poll for messages on the message broker.
+    // 
+    // [Topic("pubsub", "speedingviolations")]
+
     [Route("collectfine")]
-    [HttpPost()]
+    [Topic("pubsub", "speedingviolations")]  // auto-subscribe to topic
     public async Task<ActionResult> CollectFine(SpeedingViolation speedingViolation)
     {
         decimal fine = _fineCalculator.CalculateFine(_fineCalculatorLicenseKey!, speedingViolation.ViolationInKmh);
@@ -46,4 +54,26 @@ public class CollectionController : ControllerBase
 
         return Ok();
     }
+
+/*
+    // Subscribing to pub/sub events the programmatic way. 
+    // Dapr will call your service on the well known endpoint /dapr/subscribe 
+    // to retrieve the subscriptions for that service. 
+    // We will implement this endpoint and return the subscription for the speedingviolations topic.
+    
+    [Route("/dapr/subscribe")]
+    [HttpGet()]
+    public object Subscribe()
+    {
+        return new object[]
+        {
+        new
+        {
+            pubsubname = "pubsub",
+            topic = "speedingviolations",
+            route = "/collectfine"
+        }
+        };
+    }
+    */
 }
